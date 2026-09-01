@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"net/mail"
-	"os/user"
 	"regexp"
 	"unicode"
 	"usermanagement/database"
@@ -16,7 +15,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
+
 var Logger = logger.NewLogger()
+
 func Home(c *gin.Context) {
 	session := sessions.DefaultMany(c, "user_session")
 	userId := session.Get("user_id")
@@ -29,20 +30,20 @@ func Home(c *gin.Context) {
 	var user models.User
 	res := database.DB.Where("id = ?", userId).First(&user)
 	if res.Error != nil {
-		Logger.Error("Database Query Failed on Home page","user_id",userId,"Error",res.Error)
+		Logger.Error("Database Query Failed on Home page", "user_id", userId, "Error", res.Error)
 		c.HTML(200, "login.html", gin.H{
 			"error": "Something Went Wrong",
 		})
 		return
 	}
 	if user.IsBlocked {
-		Logger.Warn("User account Blocked","user_id",userId,"email",user.Email)
+		Logger.Warn("User account Blocked", "user_id", userId, "email", user.Email)
 		c.HTML(200, "login.html", gin.H{
 			"error": "Your Account has been Blocked",
 		})
 		return
 	}
-	Logger.Info("User Accesed homepage","user_id",userId,"user_email",user.Email)
+	Logger.Info("User Accesed homepage", "user_id", userId, "user_email", user.Email)
 	c.HTML(200, "home.html", gin.H{
 		"name": userName,
 	})
@@ -54,7 +55,7 @@ func Signuppage(c *gin.Context) {
 		c.HTML(200, "signup.html", nil)
 		return
 	}
-	Logger.Debug("Authenticated user redirected to home page","user_id",userId)
+	Logger.Debug("Authenticated user redirected to home page", "user_id", userId)
 	c.Redirect(302, "/home")
 }
 func Loginpage(c *gin.Context) {
@@ -67,7 +68,7 @@ func Loginpage(c *gin.Context) {
 		})
 		return
 	}
-	Logger.Debug("Authenticated user redirected to home page","user_id",userId)
+	Logger.Debug("Authenticated user redirected to home page", "user_id", userId)
 	c.Redirect(302, "/home")
 }
 func Signup(c *gin.Context) {
@@ -76,7 +77,7 @@ func Signup(c *gin.Context) {
 	password := c.PostForm("password")
 	confirmPassword := c.PostForm("confirm_password")
 	if !isStrongPassword(password) {
-		Logger.Warn("Signup validation Failed: weak password","email",email)
+		Logger.Warn("Signup validation Failed: weak password", "email", email)
 		c.HTML(http.StatusBadRequest, "signup.html", gin.H{
 			"Name":  name,
 			"Email": email,
@@ -85,7 +86,7 @@ func Signup(c *gin.Context) {
 		return
 	}
 	if name == "" || email == "" || password == "" || confirmPassword == "" {
-		Logger.Warn("Signup validation failed: empty field","name",name,"email",email)
+		Logger.Warn("Signup validation failed: empty field", "name", name, "email", email)
 		c.HTML(200, "signup.html", gin.H{
 			"Name":  name,
 			"Email": email,
@@ -93,7 +94,7 @@ func Signup(c *gin.Context) {
 		})
 		return
 	} else if password != confirmPassword {
-		Logger.Warn("Signup validation failed: password mismatch","email",email)
+		Logger.Warn("Signup validation failed: password mismatch", "email", email)
 		c.HTML(200, "signup.html", gin.H{
 			"Name":  name,
 			"Email": email,
@@ -103,7 +104,7 @@ func Signup(c *gin.Context) {
 	}
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		Logger.Warn("Signup Validation failed: invalid email format","email",email)
+		Logger.Warn("Signup Validation failed: invalid email format", "email", email)
 		c.HTML(200, "signup.html", gin.H{
 			"Name":  name,
 			"Email": email,
@@ -113,7 +114,7 @@ func Signup(c *gin.Context) {
 	}
 	namePattern := regexp.MustCompile(`^[a-zA-Z ]+$`)
 	if !namePattern.MatchString(name) {
-		Logger.Warn("Signup Validation Failed: Invalid name","email",email)
+		Logger.Warn("Signup Validation Failed: Invalid name", "email", email)
 		c.HTML(200, "signup.html", gin.H{
 			"Name":  name,
 			"Email": email,
@@ -126,7 +127,7 @@ func Signup(c *gin.Context) {
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		hashpassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
-			Logger.Error("Signup error: hashing password failed","email",email,"Error",err)
+			Logger.Error("Signup error: hashing password failed", "email", email, "Error", err)
 			c.HTML(200, "signup.html", gin.H{
 				"Name":  name,
 				"Email": email,
@@ -141,7 +142,7 @@ func Signup(c *gin.Context) {
 		}
 		result = database.DB.Create(&newUser)
 		if result.Error != nil {
-			Logger.Error("Signup error: User creation Failed","email",email,"Error",result.Error)
+			Logger.Error("Signup error: User creation Failed", "email", email, "Error", result.Error)
 			c.HTML(200, "signup.html", gin.H{
 				"Name":  name,
 				"Email": email,
@@ -149,10 +150,10 @@ func Signup(c *gin.Context) {
 			})
 			return
 		}
-		Logger.Info("User created Succefully","email",email)
+		Logger.Info("User created Succefully", "email", email)
 		c.Redirect(http.StatusSeeOther, "/login?success=1")
 	} else if result.Error != nil {
-		Logger.Error("Signup Error","email",email,"error",result.Error)
+		Logger.Error("Signup Error", "email", email, "error", result.Error)
 		c.HTML(200, "signup.html", gin.H{
 			"Name":  name,
 			"Email": email,
@@ -160,7 +161,7 @@ func Signup(c *gin.Context) {
 		})
 		return
 	} else {
-		Logger.Warn("Signup Error: Email already existing","email",email)
+		Logger.Warn("Signup Error: Email already existing", "email", email)
 		c.HTML(200, "signup.html", gin.H{
 			"Name":  name,
 			"Email": email,
@@ -173,7 +174,7 @@ func Login(c *gin.Context) {
 	email := c.PostForm("email")
 	password := c.PostForm("password")
 	if email == "" || password == "" {
-		Logger.Warn("Login validation Failed: invalid Fields","email",email)
+		Logger.Warn("Login validation Failed: invalid Fields", "email", email)
 		c.HTML(200, "login.html", gin.H{
 			"Email": email,
 			"error": "Fields can't be empty",
@@ -182,7 +183,7 @@ func Login(c *gin.Context) {
 	}
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		Logger.Warn("Login Validation Failed: invalid email format","email",email)
+		Logger.Warn("Login Validation Failed: invalid email format", "email", email)
 		c.HTML(200, "login.html", gin.H{
 			"Email": email,
 			"error": "Please enter a valid email address",
@@ -192,13 +193,13 @@ func Login(c *gin.Context) {
 	var user models.User
 	result := database.DB.Where("email = ?", email).First(&user)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		Logger.Warn("Login Error : Email not found","email",email)
+		Logger.Warn("Login Error : Email not found", "email", email)
 		c.HTML(200, "login.html", gin.H{
 			"Email": email,
 			"error": "Invalid Credentials",
 		})
 	} else if result.Error != nil {
-		Logger.Error("Login Error :","email",email,"error",result.Error)
+		Logger.Error("Login Error :", "email", email, "error", result.Error)
 		c.HTML(200, "login.html", gin.H{
 			"Email": email,
 			"error": "Something Went wrong",
@@ -206,7 +207,7 @@ func Login(c *gin.Context) {
 	} else {
 		res := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 		if res != nil {
-			Logger.Error("Login Error: invalid Credentials","email",email)
+			Logger.Error("Login Error: invalid Credentials", "email", email)
 			c.HTML(200, "login.html", gin.H{
 				"Email": email,
 				"error": "Invalid Credentials",
@@ -218,31 +219,31 @@ func Login(c *gin.Context) {
 		session.Set("user_name", user.Name)
 		err := session.Save()
 		if err != nil {
-			Logger.Error("Login Error: session setting failed","email",email,"error",err)
+			Logger.Error("Login Error: session setting failed", "email", email, "error", err)
 			c.HTML(200, "login.html", gin.H{
 				"Email": email,
 				"error": "Something went wrong",
 			})
 			return
 		}
-		Logger.Info("User Logined succefully","user_id",user.ID,"email",email)
+		Logger.Info("User Logined succefully", "user_id", user.ID, "email", email)
 		c.Redirect(302, "/home")
 	}
 }
 func Logout(c *gin.Context) {
 	session := sessions.DefaultMany(c, "user_session")
-	userId:=session.Get("user_id")
+	userId := session.Get("user_id")
 	session.Delete("user_id")
 	session.Delete("user_name")
 	err := session.Save()
 	if err != nil {
-		Logger.Error("Logout Error: session save Failed","user_id",userId,"error",err)
+		Logger.Error("Logout Error: session save Failed", "user_id", userId, "error", err)
 		c.HTML(200, "home.html", gin.H{
 			"error": "Unable to logout",
 		})
 		return
 	}
-	Logger.Info("User logged out succefully","user_id",userId)
+	Logger.Info("User logged out succefully", "user_id", userId)
 	c.Redirect(302, "/login")
 }
 func isStrongPassword(password string) bool {
