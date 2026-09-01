@@ -3,14 +3,18 @@ package main
 import (
 	"usermanagement/database"
 	"usermanagement/handlers"
+	"usermanagement/logger"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	log := logger.NewLogger()
 	database.ConnectDB()
 	r := gin.Default()
+	log.Info("Application Started")
 	userStore := cookie.NewStore([]byte("user_secret_key"))
 	adminStore := cookie.NewStore([]byte("admin_secret_key"))
 	userStore.Options(sessions.Options{
@@ -67,5 +71,10 @@ func main() {
 	r.POST("/superadmin/block/:id", handlers.BlockUserSuperAdmin)
 	r.POST("/admin/block/:id", handlers.BlockUserAdmin)
 
-	r.Run(":8080")
+	
+    if err := r.Run(":8080"); err != nil {
+		log.Error("HTTP server stopped unexpectedly", "error", err)
+		return
+    }
+	log.Info("Starting HTTP server", "port", 8080)
 }
