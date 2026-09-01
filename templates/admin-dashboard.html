@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <script defer src="/static/js/script.js"></script>
+</head>
+
+<body>
+    <header class="admin-header">
+        <h1>Welcome, {{.admin.Name}}</h1>
+        <a href="/admin/logout" class="logout-btn">Logout &nbsp;<i class="fa-solid fa-right-from-bracket"></i></a>
+    </header>
+    <hr>
+    <main class="dashboard-container">
+        <div class="top-bar">
+            <form action="/admin/dashboard" method="GET" class="search-box">
+                <input type="text" name="search" placeholder="Search user by name or email">
+                <button class="srch-btn" type="submit">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Search
+                </button>
+            </form>
+            <div class="top-actions">
+                <form action="/admin/dashboard" method="GET">
+                    <select name="sort" onchange="this.form.submit()" class="srch-btn">
+                        <option value=""><i class="fa-solid fa-sort"></i> Sort</option>
+                        <option value="az">Name (A-Z)</option>
+                        <option value="za">Name (Z-A)</option>
+                        <option value="new">Newest</option>
+                        <option value="old">Oldest</option>
+                    </select>
+                </form>
+                <button class="srch-btn3" type="button" onclick="addadminmodal()">
+                    <i class="fa-solid fa-user-plus"></i>
+                    Add User
+                </button>
+            </div>
+        </div>
+        <table class="table-user">
+            <thead>
+                <tr>
+                    <!-- <th>ID</th> -->
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .users}}
+                <tr>
+                    <!-- <td>{{.ID}}</td> -->
+                    <td>{{.Name}}</td>
+                    <td>{{.Email}}</td>
+                    <td>{{.Role}}</td>
+                    <td>
+                        {{if .IsBlocked}}
+                        <span class="blocked">
+                            Blocked
+                        </span>
+                        {{else}}
+                        <span class="active">
+                            Active
+                        </span>
+                        {{end}}
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="editadminModal('{{.ID}}','{{.Name}}','{{.Email}}')">
+                                <i class="fa-solid fa-pen"></i>
+                                Edit
+                            </button>
+                            <button class="delete-btn" onclick="deleteadminmodal('{{.ID}}')">
+                                <i class="fa-solid fa-trash"></i>
+                                Delete
+                            </button>
+                            {{if .IsBlocked}}
+                            <button class="unblock-btn" onclick="unblokeadminmodal('{{.ID}}')">
+                                <i class="fa-solid fa-lock-open"></i>
+                                Unblock
+                            </button>
+                            {{else}}
+                            <button class="block-btn" onclick="blokeadminmodal('{{.ID}}')">
+                                <i class="fa-solid fa-ban"></i>
+                                Block
+                            </button>
+                            {{end}}
+                        </div>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{if .error}}
+        <p class="errordash">{{.error}}</p>
+        {{end}}
+    </main>
+    <div id="blockmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeblokeadmin()"><i class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Unblock User</h2>
+            <form id="blockForm" method="post" class="editform">
+                <button type="submit" class="save-btn">Unblock User</button>
+            </form>
+        </div>
+    </div>
+    <div id="unblockmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeunblokeadmin()"><i class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Block User</h2>
+            <form id="unblockForm" method="post" class="editform">
+                <button type="submit" class="save-btn">Block User</button>
+            </form>
+        </div>
+    </div>
+    <div id="addmodal" class="modal"> 
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeaddadminmodal()"><i class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Edit User</h2>
+            {{if .adderror}}
+            <p class="erroradm">{{.adderror}}</p>
+            {{end}}
+            <form id="addFormadmin" method="post" class="editform">
+                <label>Name</label>
+                <input type="text" name="name" value="{{.Name}}" id="addname" required minlength="3" pattern="[A-Za-z .-]+"
+                    title="Name should contain only letters"><br>
+                <label>Email</label>
+                <input type="email" name="email" value="{{.Email}}" id="addemail" required><br>
+                <label>Password</label>
+                <input type="password" name="password" id="addpassword" required minlength="8"
+                    title="Password Must be at least 8 characters"><br>
+                <label>Confirm Password</label>
+                <input type="password" name="confirmpassword" id="addconfirmpassword" required minlength="8"
+                    title="Password Must be at least 8 characters"><br>
+                <button type="submit" class="save-btn">Add User</button>
+            </form>
+        </div>
+    </div>
+    <div id="editmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeadmineditmodal()"><i class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Edit User</h2>
+            <form id="editForm" method="post" class="editform">
+                <label>Name</label>
+                <input type="text" name="name" id="editname"><br>
+                <label>Email</label>
+                <input type="text" name="email" id="editemail"><br>
+                <button type="submit" class="save-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+    <div id="deletemodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeadmindeletemodal()"><i class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Delete User</h2>
+            <form id="deleteForm" method="post" class="editform">
+                <button type="submit" class="save-btn">Delete User</button>
+            </form>
+        </div>
+    </div>
+    {{if .openAddUserModal}}
+    <script>
+        (function () {
+            document.getElementById("addmodal").style.display = "flex"
+        })();
+    </script>
+    {{end}}
+</body>
+
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <script defer src="/static/js/script.js"></script>
+</head>
+
+<body>
+    <header class="admin-header">
+        <h1>Welcome, {{.admin.Name}}</h1>
+        <a href="/superadmin/logout" class="logout-btn">Logout &nbsp;<i class="fa-solid fa-right-from-bracket"></i></a>
+    </header>
+    <hr>
+    <main class="dashboard-container">
+        {{if .error}}
+        <p class="errordash">{{.error}}</p>
+        {{end}}
+        <div class="top-bar">
+            <form action="/superadmin/dashboard" method="GET" class="search-box">
+                <input type="text" name="search" placeholder="Search user by name or email">
+                <button class="srch-btn" type="submit">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Search
+                </button>
+            </form>
+            <div class="top-actions">
+                <form action="/superadmin/dashboard" method="get">
+                    <select name="sort" onchange="this.form.submit()" class="srch-btn3">
+                        <option value="">Sort</option>
+                        <option value="az">A-Z</option>
+                        <option value="za">Z-A</option>
+                        <option value="old">Oldest</option>
+                        <option value="new">Newest</option>
+                    </select>
+                </form>
+                <button class="srch-btn3" type="button" onclick="addsuperadminmodal()">
+                    <i class="fa-solid fa-user-plus"></i>
+                    Add User
+                </button>
+            </div>
+        </div>
+        <table class="table-user">
+            <thead>
+                <tr>
+                    <!-- <th>ID</th> -->
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .users}}
+                <tr>
+                    <!-- <td>{{.ID}}</td> -->
+                    <td>{{.Name}}</td>
+                    <td>{{.Email}}</td>
+                    <td>{{.Role}}</td>
+                    <td>
+                        {{if .IsBlocked}}
+                        <span class="blocked">
+                            Blocked
+                        </span>
+                        {{else}}
+                        <span class="active">
+                            Active
+                        </span>
+                        {{end}}
+                    </td>
+                    <td>
+                        {{if not .IsPrimarySA}}
+                        <div class="action-btns">
+                            <button class="edit-btn"
+                                onclick="editModal('{{.ID}}','{{.Name}}','{{.Email}}','{{.Role}}')">
+                                <i class="fa-solid fa-pen"></i>
+                                Edit
+                            </button>
+                            <button class="delete-btn" onclick="deletesuperadminModal('{{.ID}}')">
+                                <i class="fa-solid fa-trash"></i>
+                                Delete
+                            </button>
+                            {{if .IsBlocked}}
+                            <button class="unblock-btn" onclick="blokesuperadminmodal('{{.ID}}')">
+                                <i class="fa-solid fa-lock-open"></i>
+                                Unblock
+                            </button>
+                            {{else}}
+                            <button class="block-btn" onclick="unblokesuperadminmodal('{{.ID}}')">
+                                <i class="fa-solid fa-ban"></i>
+                                Block
+                            </button>
+                            {{end}}
+                            {{else}}
+                            <span>Privilaged Admin</span>
+                            {{end}}
+                        </div>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </main>
+    <div id="addmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeaddsuperadminmodal()"><i class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Edit User</h2>
+            {{if .adderror}}
+            <p class="erroradm">{{.adderror}}</p>
+            {{end}}
+            <form id="addFormsuperadmin" method="post" class="editform">
+                <label>Name</label>
+                <input type="text" name="name" value="{{.Name}}" id="addname" required minlength="3" pattern="[A-Za-z .-]+"
+                    title="Name should contain only letters"><br>
+                <label>Email</label>
+                <input type="email" name="email" value="{{.Email}}" id="addemail" required><br>
+                <label>Role</label>
+                <select name="role" id="addrole">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">SuperAdmin</option>
+                </select><br>
+                <label>Password</label>
+                <input type="password" name="password" id="addpassword" required minlength="8"
+                    title="Password Must be at least 8 characters"><br>
+                <label>Confirm Password</label>
+                <input type="password" name="confirmpassword" id="addconfirmpassword" required minlength="8"
+                    title="Password Must be at least 8 characters"><br>
+                <button type="submit" class="save-btn">Add User</button>
+            </form>
+        </div>
+    </div>
+    <div id="editmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeeditmodal()"><i class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Edit User</h2>
+            <form id="editForm" method="post" class="editform">
+                <label>Name</label>
+                <input type="text" name="name" id="editname"><br>
+                <label>Email</label>
+                <input type="text" name="email" id="editemail"><br>
+                <label>Role</label>
+                <select name="role" id="editrole">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">SuperAdmin</option>
+                </select><br><br>
+                <button type="submit" class="save-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+    <div id="deleteadminmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closedeletesuperadminmodal()"><i
+                    class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Delete User</h2>
+            <form id="deleteadminForm" method="post" class="editform">
+                <button type="submit" class="save-btn">Delete User</button>
+            </form>
+        </div>
+    </div>
+    <div id="blockadminmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeblokesuperadmin()"><i
+                    class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Unblock User</h2>
+            <form id="blockadminForm" method="post" class="editform">
+                <button type="submit" class="save-btn">Unblock User</button>
+            </form>
+        </div>
+    </div>
+    <div id="unblockadminmodal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeunblokesuperadmin()"><i
+                    class="fa-solid fa-xmark"></i>Close</button>
+            <h2>Block User</h2>
+            <form id="unblockadminForm" method="post" class="editform">
+                <button type="submit" class="save-btn">Block User</button>
+            </form>
+        </div>
+    </div>
+    {{if .openAddUserModal}}
+    <script>
+        (function(){
+            document.getElementById("addmodal").style.display="flex"
+        })();
+    </script>
+    {{end}}
+</body>
+</html>

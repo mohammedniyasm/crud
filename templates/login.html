@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <main>
+        <section>
+            <div class="login-main">
+                <div class="login-in">
+                    <p class="head">Welcome Back</p>
+                    <p class="head-sec">Please login to continue to your account</p>
+                    {{if .success}}
+                    <p class="success">Account created successfully. Please log in.</p>
+                    {{end}}
+                    {{if .error}}
+                    <p class="error">{{.error}}</p>
+                    {{end}}
+                    <form action="\login" method="post" class="form">
+                        <input class="form-element" value="{{.Email}}" type="email" placeholder="Enter your email" required name="email"><br>
+                        <input name="password" class="form-element" type="password" placeholder="Password" required
+                            minlength="8" title="Password Must be at least 8 characters"><br>
+                        <input class="lgn-btn" type="submit" value="Login  ">
+                    </form>
+                    <p class="head-sec">Don't have an account?<a href="/signup" class="lgn-link"> Sign up </a></p>
+                </div>
+            </div>
+            <div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

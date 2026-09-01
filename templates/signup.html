@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <main>
+        <section>
+            <div class="login-main">
+                <div class="login-in">
+                    <p class="head">Sign up </p>
+                    <p class="head-sec">Sign up to enjoy the feature of Revolutie</p>
+                    {{if .error}}
+                    <p class="error">{{.error}}</p>
+                    {{end}}
+                    
+                    <form action="/signup" method="post" class="form">
+                        <input name="name" value="{{.Name}}" class="form-element" type="text" placeholder="Enter your name" required
+                            minlength="3" pattern="[A-Za-z .-]+" title="Name should contain only letters"><br>
+                        <input name="email" value="{{.Email}}" class="form-element" type="email" placeholder="Enter your email"
+                            required><br>
+                        <input name="password" class="form-element" type="password" placeholder="Password" required
+                            minlength="8" title="Password Must be at least 8 characters"><br>
+                        <input name="confirm_password" class="form-element" type="password"
+                            placeholder="Confirm Password" required minlength="8"
+                            title="Password Must be at least 8 characters"><br>
+                        <input class="lgn-btn" type="submit" value="Sign up">
+                    </form>
+                    <p class="head-sec">Already have an account?<a href="/login" class="lgn-link"> Sign in </a></p>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
