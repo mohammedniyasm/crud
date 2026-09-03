@@ -1,15 +1,25 @@
 package database
 
 import (
+	"fmt"
+	"usermanagement/internal/config"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func ConnectDB() (*gorm.DB,error) {
-	dsn := "host=localhost user=postgres password=Niyas@12 dbname=usermanagment port=5432 sslmode=disable"
+func ConnectDB(cfg config.Config) (*gorm.DB, error) {
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		cfg.DBHost,
+		cfg.DBUser,
+		cfg.DBPassword,
+		cfg.DBName,
+		cfg.DBPort,
+	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return db,nil
+	return db, nil
 }
