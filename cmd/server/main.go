@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"usermanagement/internal/config"
 	"usermanagement/internal/delivery/http/handler"
 	"usermanagement/internal/delivery/http/routes"
 	"usermanagement/internal/infrastructure/database"
@@ -14,8 +15,11 @@ import (
 )
 
 func main() {
-
-	db, err := database.ConnectDB()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("Failed to load configuration:", err)
+	}
+	db, err := database.ConnectDB(*cfg)
 	if err != nil {
 		log.Fatal("Database Connection Failed")
 	}
@@ -26,8 +30,8 @@ func main() {
 
 	r := gin.Default()
 
-	userStore := cookie.NewStore([]byte("user_secret_key"))
-	adminStore := cookie.NewStore([]byte("admin_secret_key"))
+	userStore := cookie.NewStore([]byte(cfg.UserSessionSecret))
+	adminStore := cookie.NewStore([]byte(cfg.AdminSessionSecret))
 	userStore.Options(sessions.Options{
 		Path:     "/",
 		MaxAge:   86400,
