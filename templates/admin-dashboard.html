@@ -18,6 +18,9 @@
     <hr>
     <main class="dashboard-container">
         <div class="top-bar">
+            {{if .error}}
+                <p class="errordash">{{.error}}</p>
+            {{end}}
             <form action="/admin/dashboard" method="GET" class="search-box">
                 <input type="text" name="search" placeholder="Search user by name or email">
                 <button class="srch-btn" type="submit">
@@ -97,9 +100,7 @@
                 {{end}}
             </tbody>
         </table>
-        {{if .error}}
-        <p class="errordash">{{.error}}</p>
-        {{end}}
+        
     </main>
     <div id="blockmodal" class="modal">
         <div class="modal-content">
