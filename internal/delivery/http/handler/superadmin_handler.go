@@ -12,8 +12,10 @@ import (
 
 func (h *Userhandler) SuperAdminLogout(c *gin.Context) {
 	session := sessions.DefaultMany(c, "admin_session")
+	userid:=session.Get("admin_id")
 	session.Clear()
 	if err := session.Save(); err != nil {
+		h.logger.Error("superadmin logout failed: session saving failed","user_id",userid,"error",err.Error())
 		c.HTML(500, "superadmin-dashboard.html", gin.H{
 			"error": "Unable to logout",
 		})
@@ -50,12 +52,14 @@ func (h *Userhandler) SuperAdminBlock(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(302, "/superadmin/dashboard")
+		return
 	}
 	targetUserid := uint(id)
 	if err := h.usecase.BlockAdmin(targetUserid); err != nil {
 		session := sessions.DefaultMany(c, "admin_session")
 		session.Set("error", err)
 		if errr := session.Save(); errr != nil {
+			h.logger.Error("superadmin block operation failed: session saving failed","user_id",targetUserid,"error",err.Error())
 			c.AbortWithStatus(500)
 			return
 		}
@@ -68,6 +72,7 @@ func (h *Userhandler) SuperAdminEdit(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(302, "/admin/dashboard")
+		return
 	}
 	targetUserid := uint(id)
 	name := c.PostForm("name")
@@ -77,6 +82,7 @@ func (h *Userhandler) SuperAdminEdit(c *gin.Context) {
 		session := sessions.DefaultMany(c, "admin_session")
 		session.Set("error", err.Error())
 		if errr := session.Save(); errr != nil {
+			h.logger.Error("superadmin edit operation failed: session saving failed","user_id",targetUserid,"error",err.Error())
 			c.AbortWithStatus(500)
 			return
 		}
@@ -89,12 +95,14 @@ func (h *Userhandler) SuperAdminDelete(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.Redirect(302, "/superadmin/dashboard")
+		return
 	}
 	targetUserid := uint(id)
 	if err := h.usecase.DeleteAdmin(targetUserid); err != nil {
 		session := sessions.DefaultMany(c, "admin_session")
 		session.Set("error", err)
 		if errr := session.Save(); errr != nil {
+			h.logger.Error("superadmin delete operation failed: session saving failed","user_id",targetUserid,"error",err.Error())
 			c.AbortWithStatus(500)
 			return
 		}
@@ -132,6 +140,7 @@ func (h *Userhandler) SuperAdminAddUser(c *gin.Context) {
 			"openAddUserModal": true,
 			"adderror":         err,
 		})
+		return
 	}
 	c.Redirect(302, "/superadmin/dashboard")
 }
