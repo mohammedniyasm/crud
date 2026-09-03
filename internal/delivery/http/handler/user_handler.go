@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 	"usermanagement/internal/usecase"
 
@@ -10,11 +11,13 @@ import (
 
 type Userhandler struct {
 	usecase usecase.Userusecase
+	logger  *slog.Logger
 }
 
-func NewUserhandler(uc *usecase.Userusecase) *Userhandler {
+func NewUserhandler(uc *usecase.Userusecase, logg *slog.Logger) *Userhandler {
 	return &Userhandler{
 		usecase: *uc,
+		logger:  logg,
 	}
 }
 func (h *Userhandler) SignupPage(c *gin.Context) {
@@ -64,6 +67,7 @@ func (h *Userhandler) Login(c *gin.Context) {
 	session.Set("user_id", user.ID)
 	session.Set("user_name", user.Name)
 	if err := session.Save(); err != nil {
+		h.logger.Error("login failed: session setting failed","user_id",user.ID,"error",err)
 		c.HTML(500, "login.html", gin.H{
 			"Email": email,
 			"error": "Something went wrong",
@@ -86,11 +90,13 @@ func (h *Userhandler) Home(c *gin.Context) {
 		"name": user.Name,
 	})
 }
-func (h *Userhandler) Logout(c *gin.Context){
+func (h *Userhandler) Logout(c *gin.Context) {
 	session := sessions.DefaultMany(c, "user_session")
+	userId:=session.Get("user_id")
 	session.Clear()
 	err := session.Save()
 	if err != nil {
+		h.logger.Error("logout failed: session saving failed","user_id",userId,"error",err)
 		c.HTML(500, "home.html", gin.H{
 			"error": "Unable to logout",
 		})
