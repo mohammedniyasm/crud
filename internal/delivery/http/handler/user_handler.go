@@ -48,6 +48,10 @@ func (h *Userhandler) Signup(c *gin.Context) {
 	}
 	c.Redirect(302, "/login?success=1")
 }
+
+
+//This is the api to use user login
+
 func (h *Userhandler) Login(c *gin.Context) {
 	email := c.PostForm("email")
 	password := c.PostForm("password")
